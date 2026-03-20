@@ -1,3 +1,6 @@
+import java.util.HashMap;
+import java.util.Stack;
+
 public class Main {
     public static void main(String[] args) {
         System.out.println("Hello. Let the pain begin");
@@ -11,6 +14,29 @@ public class Main {
         // sample brainf**k code
         String code = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.";
 
+
+        HashMap<Integer, Integer> jumpTable = new HashMap<>();
+        Stack<Integer> stack = new Stack<>();
+
+        // look over the code before interpreting to make a jumpTable for '[' and ']'
+        for(int i = 0; i < code.length(); i++) {
+            if(code.charAt(i) == '[') {
+                stack.push(i);
+            }
+            else if(code.charAt(i) == ']') {
+                if(stack.isEmpty()) {
+                    throw new RuntimeException("Found ] without matching [ at position " + i);
+                }
+                int startingParanthesis = stack.pop();
+                jumpTable.put(startingParanthesis, i);
+                jumpTable.put(i, startingParanthesis);
+            }
+        }
+        if(!stack.isEmpty()) {
+            throw new RuntimeException("Found [ without matching ] at position " + stack.pop());
+        }
+
+
         for(int i = 0; i < code.length(); i++) {
             switch (code.charAt(i)) {
                 case '>' -> pointer++; // shift right in memory
@@ -19,38 +45,15 @@ public class Main {
                 case '-' -> memory[pointer]--;
                 case '.' -> System.out.print((char)memory[pointer]);
                 case '[' -> {
-                    // if the current cell is 0, find the closing ] for the [ we found
-                    // oh my days my comments sound so much like AI
-                    if(memory[pointer] == 0) {
-                        // skip the loop and scan forward until we find the matching ']'
-                        int loopCounter = 1;
-                        while (loopCounter > 0) {
-                            i++;
-                            if (code.charAt(i) == '[') {
-                                loopCounter++;
-                            }
-                            if (code.charAt(i) == ']') {
-                                loopCounter--;
-                            }
-                        }
-                    }
+                   if(memory[pointer] == 0) {
+                       i = jumpTable.get(i); // jump to the closing parenthesis
+                   }
                 }
 
                 case ']' -> {
-                    // now we reverse whatever [ just did
                     if(memory[pointer] != 0) {
-                        int loopCounter = 1;
-                        while (loopCounter > 0) {
-                            i--;
-                            if (code.charAt(i) == ']') {
-                                loopCounter++;
-                            }
-                            if (code.charAt(i) == '[') {
-                                loopCounter--;
-                            }
-                        }
+                        i = jumpTable.get(i); // go back to the start of the loop
                     }
-
                 }
 
             }
