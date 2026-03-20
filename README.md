@@ -33,8 +33,8 @@ jar cfe bf-compiler.jar Main *.class
 To turn a `.bf` file into a working Windows executable, follow these four steps of doom:
 
 ```bash
-# Step A: Generate the Assembly
-java -jar bf-compiler.jar script.bf
+# Step A: Generate the Assembly, don't forget to replace script.bf with your .bf file
+java -jar bf-compiler.jar script.bf out.asm
 
 # Step B: Assemble (Targeting Windows 64-bit)
 nasm -f win64 out.asm -o out.obj
@@ -55,9 +55,11 @@ Create a file named `hello.bf` and paste the following "clean" code:
 ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
 ```
 
+
+
 **Pro Tip:** Use the one-liner if you're feeling confident:
 ```bash
-java -jar bf-compiler.jar hello.bf && nasm -f win64 out.asm -o out.obj && gcc out.obj -o hello.exe -mconsole && .\hello.exe
+java -jar bf-compiler.jar hello.bf out.asm && nasm -f win64 out.asm -o out.obj && gcc out.obj -o hello.exe -mconsole && .\hello.exe
 ```
 
 ---
@@ -68,3 +70,9 @@ java -jar bf-compiler.jar hello.bf && nasm -f win64 out.asm -o out.obj && gcc ou
 * **Shadow Space Management:** Properly handles the Windows x64 ABI calling convention (32-byte shadow space + 8-byte alignment).
 
 ---
+
+## Mandelbrot Example
+I also included a crazy mandelbrot .bf script that some masochist wrote.
+
+<img width="738" height="766" alt="image" src="https://github.com/user-attachments/assets/fcbbaab8-0c26-4f4c-93b2-f069a20b854c" />
+
