@@ -1,65 +1,86 @@
+
 import java.io.IOException;
-import java.util.HashMap;
+
 import java.util.Stack;
 
+
+
 public class Main {
+
+
     public static void main(String[] args) throws IOException {
-        System.out.println("Hello. Let the pain begin");
+        System.out.println("Hello. Let the pain begin, bf to asm x86 64-bit");
 
-        // making a sort of virtual machine to run this on
-        byte[] memory = new byte[30000];
-
-        // tha pointa
-        int pointer = 0;
+        FileAppender f = new FileAppender("out.asm");
 
         // sample brainf**k code
         String code = ",>,[-<+>]<------------------------------------------------.";
 
 
-        HashMap<Integer, Integer> jumpTable = new HashMap<>();
+        int labelCounter = 0;
         Stack<Integer> stack = new Stack<>();
 
-        // look over the code before interpreting to make a jumpTable for '[' and ']'
-        for(int i = 0; i < code.length(); i++) {
-            if(code.charAt(i) == '[') {
-                stack.push(i);
-            }
-            else if(code.charAt(i) == ']') {
-                if(stack.isEmpty()) {
-                    throw new RuntimeException("Found ] without matching [ at position " + i);
-                }
-                int startingParanthesis = stack.pop();
-                jumpTable.put(startingParanthesis, i);
-                jumpTable.put(i, startingParanthesis);
-            }
-        }
-        if(!stack.isEmpty()) {
-            throw new RuntimeException("Found [ without matching ] at position " + stack.pop());
-        }
+        f.appendToFile("""
+                global main
+                extern putchar
+                extern getchar
+                
+                section .bss
+                   tape resb 30000
+                section .text
+                main:
+                   sub rsp, 40
+                   lea rbx, [rel tape]
+                """
+        );
+
+
+
 
 
         for(int i = 0; i < code.length(); i++) {
             switch (code.charAt(i)) {
-                case '>' -> pointer++; // shift right in memory
-                case '<' -> pointer--; // shift left in memory
-                case '+' -> memory[pointer]++;
-                case '-' -> memory[pointer]--;
-                case '.' -> System.out.print((char)memory[pointer]);
-                case ',' -> memory[pointer] = (byte) System.in.read();
-                case '[' -> {
-                   if(memory[pointer] == 0) {
-                       i = jumpTable.get(i); // jump to the closing parenthesis
-                   }
+                case '>' -> f.appendToFile("inc rbx\n");
+                case '<' -> f.appendToFile("dec rbx\n");
+                case '+' -> f.appendToFile("inc byte [rbx]\n");
+                case '-' -> f.appendToFile("dec byte [rbx]\n");
+                case '.' -> {
+                    f.appendToFile("movzx rcx, byte [rbx]");
+                    f.appendToFile("call putchar");
+                }
+                case ',' -> {
+                    f.appendToFile("call getchar");
+                    f.appendToFile("mov byte [rbx], al");
                 }
 
+                case '[' -> {
+                   int currentId = labelCounter++;
+                   stack.push(currentId);
+
+                   f.appendToFile("loop_start_" + currentId + ":");
+                   f.appendToFile("    cmp byte [rbx], 0");
+                   f.appendToFile("    jz loop_end_" + currentId);
+                }
                 case ']' -> {
-                    if(memory[pointer] != 0) {
-                        i = jumpTable.get(i); // go back to the start of the loop
+                    if(stack.isEmpty()) {
+                        throw new RuntimeException("Synthax error: too many ]'s");
                     }
+                    int matchingId = stack.pop();
+
+                    f.appendToFile("    jmp loop_start_" + matchingId);
+                    f.appendToFile("loop_end_" + matchingId + ":");
                 }
 
             }
 
         }
+
+        f.appendToFile("""
+                xor rax, rax
+                add rsp, 40
+                ret
+                """
+        );
+
     }
 }
