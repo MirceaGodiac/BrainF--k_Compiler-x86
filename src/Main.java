@@ -1,30 +1,21 @@
-
 import java.io.IOException;
-
+import java.io.PrintWriter;
 import java.util.Stack;
 
-
-
 public class Main {
-
-
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         System.out.println("Hello. Let the pain begin, bf to asm x86 64-bit");
-
-        FileAppender f = new FileAppender("out.asm");
-
-        // sample brainf**k code
-        String code = ",>,[-<+>]<------------------------------------------------.";
-
+        // A complex ROT13 Cipher script
+        String code = "-,+[-[>>++++[>++++++++<-]<+<-[>+>+>-[>>>]<[[>+<-]>>+>]<<<<<-]]>>>[-]+>--[-[<->+++[-]]]<[++++++++++++<[>-[>+>>]>[+[<+>-]>+>>]<<<<<-]>>[<+>-]>[-[-<<[-]>>]<<[<<->>-]>>]<<[<<+>>-]]<[-]<.[-]<-,+]";
 
         int labelCounter = 0;
         Stack<Integer> stack = new Stack<>();
+        StringBuilder asm = new StringBuilder();
 
-        f.appendToFile("""
+        asm.append("""
                 global main
                 extern putchar
                 extern getchar
-                
                 section .bss
                    tape resb 30000
                 section .text
@@ -34,53 +25,52 @@ public class Main {
                 """
         );
 
-
-
-
-
         for(int i = 0; i < code.length(); i++) {
             switch (code.charAt(i)) {
-                case '>' -> f.appendToFile("inc rbx\n");
-                case '<' -> f.appendToFile("dec rbx\n");
-                case '+' -> f.appendToFile("inc byte [rbx]\n");
-                case '-' -> f.appendToFile("dec byte [rbx]\n");
+                case '>' -> asm.append("inc rbx\n");
+                case '<' -> asm.append("dec rbx\n");
+                case '+' -> asm.append("inc byte [rbx]\n");
+                case '-' -> asm.append("dec byte [rbx]\n");
                 case '.' -> {
-                    f.appendToFile("movzx rcx, byte [rbx]");
-                    f.appendToFile("call putchar");
+                    asm.append("movzx rcx, byte [rbx]\n");
+                    asm.append("call putchar\n");
                 }
                 case ',' -> {
-                    f.appendToFile("call getchar");
-                    f.appendToFile("mov byte [rbx], al");
+                    asm.append("call getchar\n");
+                    asm.append("mov byte [rbx], al\n");
                 }
 
                 case '[' -> {
                    int currentId = labelCounter++;
                    stack.push(currentId);
-
-                   f.appendToFile("loop_start_" + currentId + ":");
-                   f.appendToFile("    cmp byte [rbx], 0");
-                   f.appendToFile("    jz loop_end_" + currentId);
+                    asm.append("loop_start_").append(currentId).append(":\n");
+                    asm.append("    cmp byte [rbx], 0\n");
+                    asm.append("    jz loop_end_").append(currentId).append("\n");
                 }
                 case ']' -> {
                     if(stack.isEmpty()) {
                         throw new RuntimeException("Synthax error: too many ]'s");
                     }
                     int matchingId = stack.pop();
-
-                    f.appendToFile("    jmp loop_start_" + matchingId);
-                    f.appendToFile("loop_end_" + matchingId + ":");
+                    asm.append("    jmp loop_start_").append(matchingId).append("\n");
+                    asm.append("loop_end_").append(matchingId).append(":\n");
                 }
 
             }
 
         }
 
-        f.appendToFile("""
-                xor rax, rax
-                add rsp, 40
-                ret
-                """
-        );
+        if (!stack.isEmpty()) throw new RuntimeException("Syntax error: too many ['s");
+
+        asm.append("    xor rax, rax\n    add rsp, 40\n    ret\n");
+
+        // Write to disk ONCE
+        try (PrintWriter out = new PrintWriter("out.asm")) {
+            out.print(asm);
+            System.out.println("Compilation finished successfully.");
+        } catch (IOException e) {
+            System.err.println("File write failed.");
+        }
 
     }
 }
