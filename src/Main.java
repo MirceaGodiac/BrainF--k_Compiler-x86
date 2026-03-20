@@ -1,8 +1,9 @@
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Stack;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         System.out.println("Hello. Let the pain begin");
 
         // making a sort of virtual machine to run this on
@@ -12,7 +13,7 @@ public class Main {
         int pointer = 0;
 
         // sample brainf**k code
-        String code = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.";
+        String code = ",>,[-<+>]<------------------------------------------------.";
 
 
         HashMap<Integer, Integer> jumpTable = new HashMap<>();
@@ -44,6 +45,7 @@ public class Main {
                 case '+' -> memory[pointer]++;
                 case '-' -> memory[pointer]--;
                 case '.' -> System.out.print((char)memory[pointer]);
+                case ',' -> memory[pointer] = (byte) System.in.read();
                 case '[' -> {
                    if(memory[pointer] == 0) {
                        i = jumpTable.get(i); // jump to the closing parenthesis
