@@ -2,9 +2,9 @@
 
 Yes, that's the language's name. 
 
-An Ahead-of-Time (AOT) compiler that translates Brainfuck source code into **x86_64 Assembly**. 
+An Ahead-of-Time compiler that translates Brainf**k source code into **x86_64 Assembly**. 
 
-I optimised it by making it group repetitive commands very often seen in the BrainF--k language to save my cpu of some suffering.
+I optimised it by making it group repetitive commands very often seen in the BrainF**k language to save my cpu of some suffering.
 
 ---
 
